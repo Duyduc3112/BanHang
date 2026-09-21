@@ -1,0 +1,276 @@
+﻿using System;
+using System.Configuration;
+using System.Data;
+using Npgsql; // Thay thế cho System.Data.SqlClient
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace ERP_BanHang
+{
+    public partial class QlySanPham : Form
+    {
+        // Chuỗi kết nối PostgreSQL CSDL ERP_BanHang
+        private string connectionString = ConfigurationManager.ConnectionStrings["ERP_Connection"].ConnectionString;
+        private DataTable dtSanPham;
+        private bool isInitializing = true;
+
+        public QlySanPham()
+        {
+            InitializeComponent();
+        }
+
+        private void QlySanPham_Load(object sender, EventArgs e)
+        {
+            this.WindowState = FormWindowState.Maximized;
+
+            isInitializing = true;
+
+            KhoiTaoCotBang();
+            LoadDanhMucIntoComboBox(); // Load danh mục LoaiSP từ CSDL PostgreSQL
+            LoadDataSanPham();          // Load danh sách sản phẩm kết hợp HangHoa
+
+            isInitializing = false;
+        }
+
+        private void KhoiTaoCotBang()
+        {
+            BangSanPham.Columns.Clear();
+            BangSanPham.AutoGenerateColumns = false;
+
+            // 1. Mã SP
+            DataGridViewTextBoxColumn colIDSP = new DataGridViewTextBoxColumn();
+            colIDSP.Name = "colIDSP";
+            colIDSP.HeaderText = "MÃ SẢN PHẨM";
+            colIDSP.DataPropertyName = "ID_SP";
+            colIDSP.FillWeight = 12;
+            colIDSP.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            colIDSP.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            colIDSP.DefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            colIDSP.DefaultCellStyle.ForeColor = Color.FromArgb(13, 110, 253);
+            BangSanPham.Columns.Add(colIDSP);
+
+            // 2. Tên Sản Phẩm
+            DataGridViewTextBoxColumn colTenHang = new DataGridViewTextBoxColumn();
+            colTenHang.Name = "colTenHang";
+            colTenHang.HeaderText = "TÊN SẢN PHẨM";
+            colTenHang.DataPropertyName = "TenHang";
+            colTenHang.FillWeight = 30;
+            colTenHang.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            BangSanPham.Columns.Add(colTenHang);
+
+            // 3. Loại SP
+            DataGridViewTextBoxColumn colLoaiSP = new DataGridViewTextBoxColumn();
+            colLoaiSP.Name = "colLoaiSP";
+            colLoaiSP.HeaderText = "LOẠI SẢN PHẨM";
+            colLoaiSP.DataPropertyName = "LoaiSP";
+            colLoaiSP.FillWeight = 18;
+            colLoaiSP.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            BangSanPham.Columns.Add(colLoaiSP);
+
+            // 4. Thương Hiệu
+            DataGridViewTextBoxColumn colThuongHieu = new DataGridViewTextBoxColumn();
+            colThuongHieu.Name = "colThuongHieu";
+            colThuongHieu.HeaderText = "THƯƠNG HIỆU";
+            colThuongHieu.DataPropertyName = "ThuongHieu";
+            colThuongHieu.FillWeight = 16;
+            colThuongHieu.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            BangSanPham.Columns.Add(colThuongHieu);
+
+            // 5. Đơn Giá 
+            DataGridViewTextBoxColumn colGiaSP = new DataGridViewTextBoxColumn();
+            colGiaSP.Name = "colGiaSP";
+            colGiaSP.HeaderText = "ĐƠN GIÁ";
+            colGiaSP.DataPropertyName = "GiaSP";
+            colGiaSP.FillWeight = 14;
+            colGiaSP.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            colGiaSP.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            colGiaSP.DefaultCellStyle.Format = "N0";
+            BangSanPham.Columns.Add(colGiaSP);
+
+            // 6. Tồn Kho 
+            DataGridViewTextBoxColumn colTonKho = new DataGridViewTextBoxColumn();
+            colTonKho.Name = "colTonKho";
+            colTonKho.HeaderText = "TỒN KHO";
+            colTonKho.DataPropertyName = "TonKho";
+            colTonKho.FillWeight = 10;
+            colTonKho.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            colTonKho.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            colTonKho.DefaultCellStyle.Format = "N0";
+            BangSanPham.Columns.Add(colTonKho);
+
+            BangSanPham.AllowUserToResizeColumns = true;
+            BangSanPham.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        }
+
+        private void LoadDataSanPham()
+        {
+            // JOIN giữa SanPham và HangHoa theo MaHang trong PostgreSQL
+            string query = @"
+                SELECT 
+                    SP.ID_SP,
+                    HH.TenHang,
+                    SP.LoaiSP,
+                    SP.ThuongHieu,
+                    SP.GiaSP,
+                    HH.TonKho
+                FROM SanPham SP
+                INNER JOIN HangHoa HH ON SP.MaHang = HH.MaHang
+                ORDER BY SP.ID_SP ASC";
+
+            using (NpgsqlConnection conn = new NpgsqlConnection(connectionString))
+            {
+                try
+                {
+                    conn.Open();
+                    NpgsqlDataAdapter da = new NpgsqlDataAdapter(query, conn);
+                    dtSanPham = new DataTable();
+                    da.Fill(dtSanPham);
+
+                    BangSanPham.DataSource = dtSanPham;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Lỗi kết nối CSDL khi tải sản phẩm: " + ex.Message, "Lỗi PostgreSQL", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void LoadDanhMucIntoComboBox()
+        {
+            // Lấy các giá trị LoaiSP duy nhất trực tiếp từ SanPham
+            string query = "SELECT DISTINCT LoaiSP FROM SanPham WHERE LoaiSP IS NOT NULL";
+
+            using (NpgsqlConnection conn = new NpgsqlConnection(connectionString))
+            {
+                try
+                {
+                    conn.Open();
+                    NpgsqlDataAdapter da = new NpgsqlDataAdapter(query, conn);
+                    DataTable dtLoai = new DataTable();
+                    da.Fill(dtLoai);
+
+                    DataRow dr = dtLoai.NewRow();
+                    dr["LoaiSP"] = "Tất cả loại sản phẩm";
+                    dtLoai.Rows.InsertAt(dr, 0);
+
+                    cboFilterCategory.DataSource = dtLoai;
+                    cboFilterCategory.DisplayMember = "LoaiSP";
+                    cboFilterCategory.SelectedIndex = 0;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Lỗi tải danh mục sản phẩm: " + ex.Message, "Lỗi PostgreSQL", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void BangSanPham_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (BangSanPham.Columns[e.ColumnIndex].Name == "colTonKho" && e.Value != null)
+            {
+                if (int.TryParse(e.Value.ToString(), out int tonKho))
+                {
+                    if (tonKho == 0)
+                    {
+                        e.CellStyle.BackColor = Color.FromArgb(248, 215, 218);
+                        e.CellStyle.ForeColor = Color.FromArgb(114, 28, 36);
+                        e.CellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+                    }
+                    else if (tonKho < 2500)
+                    {
+                        e.CellStyle.BackColor = Color.FromArgb(255, 243, 205);
+                        e.CellStyle.ForeColor = Color.FromArgb(133, 100, 4);
+                    }
+                }
+            }
+        }
+
+        private void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+            LocDuLieu();
+        }
+
+        private void cboFilterCategory_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            LocDuLieu();
+        }
+
+        private void LocDuLieu()
+        {
+            if (isInitializing || dtSanPham == null) return;
+
+            string keyword = txtSearch.Text.Trim().Replace("'", "''");
+            if (keyword == "Tìm mã SP, tên sản phẩm...") keyword = "";
+
+            string selectedCategory = cboFilterCategory.Text;
+
+            DataView dv = dtSanPham.DefaultView;
+            string filter = "1=1";
+
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                filter += $" AND (ID_SP LIKE '%{keyword}%' OR TenHang LIKE '%{keyword}%' OR ThuongHieu LIKE '%{keyword}%')";
+            }
+
+            if (!string.IsNullOrEmpty(selectedCategory) && selectedCategory != "Tất cả loại sản phẩm")
+            {
+                filter += $" AND LoaiSP = '{selectedCategory}'";
+            }
+
+            dv.RowFilter = filter;
+            BangSanPham.DataSource = dv;
+        }
+
+        // ==========================================
+        // KHU VỰC ĐIỀU HƯỚNG SIDEBAR
+        // ==========================================
+
+        private void btnSanPham_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+            QlySanPham qlySanPhamForm = new QlySanPham();
+            qlySanPhamForm.ShowDialog();
+            this.Close();
+        }
+
+        private void btnDonHang_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+            QlyDonHang qlyDonHangForm = new QlyDonHang();
+            qlyDonHangForm.ShowDialog();
+            this.Close();
+        }
+
+        private void btnNhaPhanPhoi_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+            QlyKhachHang qlyKhachHangForm = new QlyKhachHang();
+            qlyKhachHangForm.ShowDialog();
+            this.Close();
+        }
+
+        private void btnHangTraLoi_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+            XulyHangLoi xulyHangLoiForm = new XulyHangLoi();
+            xulyHangLoiForm.ShowDialog();
+            this.Close();
+        }
+
+        private void btnGiaoHang_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+            QlyGiaoHang qlyGiaoHangForm = new QlyGiaoHang();
+            qlyGiaoHangForm.ShowDialog();
+            this.Close();
+        }
+
+        private void btnThongKe_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+            BaoCaoThongKe baoCaoThongKeForm = new BaoCaoThongKe();
+            baoCaoThongKeForm.ShowDialog();
+            this.Close();
+        }
+    }
+}
