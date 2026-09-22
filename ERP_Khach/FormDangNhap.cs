@@ -6,7 +6,7 @@ using System;
 using System.Configuration;
 using System.Windows.Forms;
 
-namespace ERP_Khach
+namespace ERP_Khach 
 {
     public partial class FormDangNhap : Form
     {
