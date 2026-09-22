@@ -139,9 +139,7 @@ namespace ERP_BanHang
             }
         }
 
-        // ==========================================
-        // XỬ LÝ NHẤN GIỮ LÂU ĐỂ XÓA (LONG-PRESS)
-        // ==========================================
+  
 
         private void BangKhachHang_MouseDown(object sender, MouseEventArgs e)
         {

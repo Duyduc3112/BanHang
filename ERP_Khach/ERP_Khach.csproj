@@ -121,5 +121,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ERP_BanHang\ERP_BanHang.csproj">
+      <Project>{3e13f865-681d-47fb-b68f-3141fbf886dc}</Project>
+      <Name>ERP_BanHang</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Configuration;
-using Npgsql; // Thay thế cho System.Data.SqlClient
+using System.Data;
 using System.Drawing;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using Npgsql;
 
 namespace ERP_BanHang
 {
@@ -31,7 +33,11 @@ namespace ERP_BanHang
             string email = LayGiaTri(txtEmail, "VD: contact@thanhdat.com");
             string diaChi = LayGiaTri(txtDiaChi, "VD: Số 10, Đường Cầu Giấy, Hà Nội");
 
-            // Ràng buộc trường bắt buộc
+            // ==========================================
+            // BẮT ĐIỀU KIỆN RÀNG BUỘC DỮ LIỆU
+            // ==========================================
+
+            // 1. Kiểm tra trường bắt buộc
             if (string.IsNullOrEmpty(idKH))
             {
                 MessageBox.Show("Vui lòng nhập Mã khách hàng!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -47,27 +53,129 @@ namespace ERP_BanHang
                 txtTenDoanhNghiep.Focus();
                 return;
             }
+            if(string.IsNullOrEmpty(sdt))
+            {
+                MessageBox.Show("Vui lòng nhập Số điện thoại!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                tabControlMain.SelectedIndex = 1;
+                txtSDT.Focus();
+                return;
+            }
+            if(string.IsNullOrEmpty(email))
+            {
+                MessageBox.Show("Vui lòng nhập Email!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                tabControlMain.SelectedIndex = 1;
+                txtEmail.Focus();
+                return;
+            }
+            if (string.IsNullOrEmpty(diaChi))
+            {
+                MessageBox.Show("Vui lòng nhập Địa chỉ!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                tabControlMain.SelectedIndex = 1;
+                txtDiaChi.Focus();
+                return;
+            }
+            if (string.IsNullOrEmpty(mst))
+            {
+                MessageBox.Show("Vui lòng nhập Mã số thuế!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                tabControlMain.SelectedIndex = 0;
+                txtMaSoThue.Focus();
+                return;
+            }
 
-            string query = @"
-                INSERT INTO KhachHang (ID_KH, NguoiDaiDien, TenDoanhNghiep, MaSoThue, DiaChi, SDT, Email)
-                VALUES (@ID_KH, @NguoiDaiDien, @TenDoanhNghiep, @MaSoThue, @DiaChi, @SDT, @Email)";
+            // 2. Kiểm tra định dạng Mã số thuế (Nếu có nhập)
+            if (!string.IsNullOrEmpty(mst))
+            {
+                if (!Regex.IsMatch(mst, @"^[0-9]{10,13}$"))
+                {
+                    MessageBox.Show("Mã số thuế không hợp lệ! MST phải gồm từ 10 đến 13 chữ số.", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    tabControlMain.SelectedIndex = 0;
+                    txtMaSoThue.Focus();
+                    return;
+                }
+            }
 
+            // 3. Kiểm tra định dạng Số điện thoại (Nếu có nhập)
+            if (!string.IsNullOrEmpty(sdt))
+            {
+                if (!Regex.IsMatch(sdt, @"^0[0-9]{9}$"))
+                {
+                    MessageBox.Show("Số điện thoại không hợp lệ! SĐT phải bắt đầu bằng số 0 và đúng 10 chữ số.", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    tabControlMain.SelectedIndex = 1;
+                    txtSDT.Focus();
+                    return;
+                }
+            }
+
+            // 4. Kiểm tra định dạng Email (Nếu có nhập)
+            if (!string.IsNullOrEmpty(email))
+            {
+                if (!Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                {
+                    MessageBox.Show("Địa chỉ Email không đúng định dạng (Ví dụ: contact@domain.com)!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    tabControlMain.SelectedIndex = 1;
+                    txtEmail.Focus();
+                    return;
+                }
+            }
+
+            // ==========================================
+            // KIỂM TRA TRÙNG LẶP TRONG DATABASE NEON
+            // ==========================================
             using (NpgsqlConnection conn = new NpgsqlConnection(connectionString))
             {
                 try
                 {
                     conn.Open();
-                    using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@ID_KH", idKH);
-                        cmd.Parameters.AddWithValue("@NguoiDaiDien", string.IsNullOrEmpty(nguoiDD) ? (object)DBNull.Value : nguoiDD);
-                        cmd.Parameters.AddWithValue("@TenDoanhNghiep", tenDN);
-                        cmd.Parameters.AddWithValue("@MaSoThue", string.IsNullOrEmpty(mst) ? (object)DBNull.Value : mst);
-                        cmd.Parameters.AddWithValue("@DiaChi", string.IsNullOrEmpty(diaChi) ? (object)DBNull.Value : diaChi);
-                        cmd.Parameters.AddWithValue("@SDT", string.IsNullOrEmpty(sdt) ? (object)DBNull.Value : sdt);
-                        cmd.Parameters.AddWithValue("@Email", string.IsNullOrEmpty(email) ? (object)DBNull.Value : email);
 
-                        cmd.ExecuteNonQuery();
+                    // Kiểm tra Mã KH bị trùng
+                    string checkIdQuery = "SELECT COUNT(*) FROM khachhang WHERE LOWER(id_kh) = LOWER(@ID_KH)";
+                    using (NpgsqlCommand cmdCheck = new NpgsqlCommand(checkIdQuery, conn))
+                    {
+                        cmdCheck.Parameters.AddWithValue("@ID_KH", idKH);
+                        if (Convert.ToInt64(cmdCheck.ExecuteScalar()) > 0)
+                        {
+                            MessageBox.Show($"Mã khách hàng [{idKH}] đã tồn tại trong hệ thống!", "Trùng dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            tabControlMain.SelectedIndex = 0;
+                            txtID_KH.Focus();
+                            return;
+                        }
+                    }
+
+                    // Kiểm tra Mã số thuế bị trùng (Nếu có nhập)
+                    if (!string.IsNullOrEmpty(mst))
+                    {
+                        string checkMstQuery = "SELECT COUNT(*) FROM khachhang WHERE masothue = @MaSoThue";
+                        using (NpgsqlCommand cmdCheck = new NpgsqlCommand(checkMstQuery, conn))
+                        {
+                            cmdCheck.Parameters.AddWithValue("@MaSoThue", mst);
+                            if (Convert.ToInt64(cmdCheck.ExecuteScalar()) > 0)
+                            {
+                                MessageBox.Show($"Mã số thuế [{mst}] đã được đăng ký cho một khách hàng khác!", "Trùng dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                tabControlMain.SelectedIndex = 0;
+                                txtMaSoThue.Focus();
+                                return;
+                            }
+                        }
+                    }
+
+                    // ==========================================
+                    // THỰC HIỆN THÊM MỚI KHI THỎA MÃN TẤT CẢ
+                    // ==========================================
+                    string insertQuery = @"
+                        INSERT INTO khachhang (id_kh, nguoidaidien, tendoanhnghiep, masothue, diachi, sdt, email)
+                        VALUES (@ID_KH, @NguoiDaiDien, @TenDoanhNghiep, @MaSoThue, @DiaChi, @SDT, @Email)";
+
+                    using (NpgsqlCommand cmdInsert = new NpgsqlCommand(insertQuery, conn))
+                    {
+                        cmdInsert.Parameters.AddWithValue("@ID_KH", idKH);
+                        cmdInsert.Parameters.AddWithValue("@NguoiDaiDien", string.IsNullOrEmpty(nguoiDD) ? (object)DBNull.Value : nguoiDD);
+                        cmdInsert.Parameters.AddWithValue("@TenDoanhNghiep", tenDN);
+                        cmdInsert.Parameters.AddWithValue("@MaSoThue", string.IsNullOrEmpty(mst) ? (object)DBNull.Value : mst);
+                        cmdInsert.Parameters.AddWithValue("@DiaChi", string.IsNullOrEmpty(diaChi) ? (object)DBNull.Value : diaChi);
+                        cmdInsert.Parameters.AddWithValue("@SDT", string.IsNullOrEmpty(sdt) ? (object)DBNull.Value : sdt);
+                        cmdInsert.Parameters.AddWithValue("@Email", string.IsNullOrEmpty(email) ? (object)DBNull.Value : email);
+
+                        cmdInsert.ExecuteNonQuery();
                     }
 
                     MessageBox.Show("Thêm khách hàng mới thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);

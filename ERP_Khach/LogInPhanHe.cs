@@ -52,6 +52,7 @@ namespace ERP_Khach
             FormDangNhap login = new FormDangNhap();
             login.ShowDialog(); // Mở Form Đăng Nhập
             this.Show(); 
+            this.Close(); 
         }
     }
 }
