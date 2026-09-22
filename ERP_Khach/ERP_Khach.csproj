@@ -147,6 +147,14 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Quang\ERP\ERP\ERP.csproj">
+      <Project>{d2182ba6-853a-40ef-9e62-779d45de8074}</Project>
+      <Name>ERP</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ERPKho1\ERPKho1.csproj">
+      <Project>{c746ceac-1bb1-494e-822f-78a31a195f17}</Project>
+      <Name>ERPKho1</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ERP_BanHang\ERP_BanHang.csproj">
       <Project>{3e13f865-681d-47fb-b68f-3141fbf886dc}</Project>
       <Name>ERP_BanHang</Name>

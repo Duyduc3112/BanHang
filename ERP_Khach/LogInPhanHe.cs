@@ -16,47 +16,53 @@ namespace ERP_Khach
             lblThoiGian.Text = DateTime.Now.ToString("dddd, dd 'tháng' MM 'năm' yyyy · HH:mm");
         }
 
+        // ==========================================
+        // SỰ KIỆN CLICK CÁC PANEL CHỌN PHÂN HỆ
+        // ==========================================
         private void pnlSanXuat_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Mở phân hệ: Sản xuất", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MoFormDangNhap("Phân hệ Sản xuất");
         }
 
         private void pnlBanHang_Click(object sender, EventArgs e)
         {
-            MoFormDangNhap();
+            MoFormDangNhap("Phân hệ Bán Hàng");
         }
 
         private void pnlLogistics_Click(object sender, EventArgs e)
         {
-            MoFormDangNhap();
+            MoFormDangNhap("Phân hệ Logistics");
         }
 
         private void pnlKho_Click(object sender, EventArgs e)
         {
-            MoFormDangNhap();
+            MoFormDangNhap("Phân hệ Kho");
         }
 
         private void pnlNhanSu_Click(object sender, EventArgs e)
         {
-            MoFormDangNhap();
+            MoFormDangNhap("Phân hệ Nhân sự");
         }
 
         private void pnlTaiChinh_Click(object sender, EventArgs e)
         {
-            MoFormDangNhap();
+            MoFormDangNhap("Phân hệ Tài chính");
         }
 
-        // Hàm dùng chung để mở Form Đăng Nhập
-        private void MoFormDangNhap()
+        // ==========================================
+        // HÀM MỞ FORM ĐĂNG NHẬP VÀ TRUYỀN PHÂN HỆ ĐÃ CHỌN
+        // ==========================================
+        private void MoFormDangNhap(string tenPhanHe)
         {
-            
-
-            using (FormDangNhap login = new FormDangNhap())
+ 
+            // Khởi tạo FormDangNhap và truyền Tên phân hệ sang Constructor
+            using (FormDangNhap login = new FormDangNhap(tenPhanHe))
             {
                 login.ShowDialog(); // Mở Form Đăng nhập dưới dạng Dialog
             }
 
-            this.Close(); // Đóng hoàn toàn Form hiện tại sau khi Form Đăng Nhập đóng lại
+            // Đóng hoàn toàn Form này sau khi làm việc xong
+            this.Close();
         }
     }
 }

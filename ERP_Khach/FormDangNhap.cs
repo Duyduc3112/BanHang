@@ -1,20 +1,27 @@
 ﻿using ERP_BanHang; // Tham chiếu sang Project Bán Hàng
-
-using Npgsql; // Thư viện PostgreSQL cho Neon Data
+using ERP;
+using ERPKho1;
+using Npgsql;
 using System;
-using System.Configuration; 
+using System.Configuration;
 using System.Windows.Forms;
 
 namespace ERP_Khach
 {
     public partial class FormDangNhap : Form
     {
-        // Chuỗi kết nối Neon Postgres (Thay chuỗi kết nối của bạn vào đây)
         private string connectionString = ConfigurationManager.ConnectionStrings["ERP_Connection"].ConnectionString;
-   
 
-       
-       
+        // Biến lưu Phân hệ do Form LoginPhanHe truyền sang
+        private string phanHeDaChon = "";
+
+        // Constructor nhận tên Phân hệ
+        public FormDangNhap(string phanHe)
+        {
+            InitializeComponent();
+            this.phanHeDaChon = phanHe;
+        }
+
         public FormDangNhap()
         {
             InitializeComponent();
@@ -22,12 +29,11 @@ namespace ERP_Khach
 
         private void FormDangNhap_Load(object sender, EventArgs e)
         {
+            // Hiển thị tên Phân hệ lên tiêu đề hoặc Label trên Form nếu muốn
+            this.Text = $"Đăng nhập - {phanHeDaChon}";
             txtTaiKhoan.Focus();
         }
 
-        // ==========================================
-        // XỬ LÝ ĐĂNG NHẬP VÀ PHÂN QUYỀN
-        // ==========================================
         private void btnDangNhap_Click(object sender, EventArgs e)
         {
             string tenDangNhap = txtTaiKhoan.Text.Trim();
@@ -47,13 +53,11 @@ namespace ERP_Khach
                 return;
             }
 
-            // Gọi hàm kiểm tra tài khoản & lấy vai trò
             KiemTraVaChuyenForm(tenDangNhap, matKhau);
         }
 
         private void KiemTraVaChuyenForm(string tenDangNhap, string matKhau)
         {
-            // Query JOIN bảng hethong với nhanvien thông qua id_nv
             string query = @"
                 SELECT 
                     h.id_nv,
@@ -79,47 +83,63 @@ namespace ERP_Khach
                     {
                         if (reader.Read())
                         {
-                            // Đăng nhập đúng tài khoản -> Lấy các thông tin nhân viên
                             string idNV = reader["id_nv"]?.ToString();
                             string tenNV = reader["tennv"]?.ToString();
                             string chucVu = reader["chucvu"]?.ToString();
                             string vaiTro = reader["vaitro"]?.ToString();
 
-                            // XÉT ĐIỀU KIỆN VAI TRÒ / CHỨC VỤ ĐỂ MỞ FORM BÁN HÀNG
-                            if (KiemTraQuyenBanHang(chucVu, vaiTro))
+                            // XÁC THỰC THEO PHÂN HỆ ĐÃ CHỌN TỪ BÊN NGOÀI
+                            if (phanHeDaChon == "Phân hệ Kho")
                             {
-                                MessageBox.Show($"Đăng nhập thành công!\nMã NV: {idNV}\nHọ tên: {tenNV}\nChức vụ: {chucVu}\nQuyền: Cho phép truy cập Phân hệ Bán Hàng.",
-                                                "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                      
+                                if (KiemTraQuyenKho(chucVu, vaiTro))
+                                {
+                                    MessageBox.Show($"Đăng nhập thành công!\nNghề nghiệp/Chức vụ: {chucVu}\nChào mừng vào Phân hệ Kho.", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                                this.Hide();
-
-                                // Mở Form Bán Hàng thuộc Project ERP_BanHang
-                                QlyDonHang frmBanHang = new QlyDonHang();
-                                frmBanHang.ShowDialog();
-
-                                this.Close();
+                                    this.Hide();
+                                    FrMain frmKho = new FrMain();
+                                    frmKho.ShowDialog();
+                                    this.Close();
+                                }
+                                else
+                                {
+                                    MessageBox.Show($"Tài khoản của nhân viên [{tenNV}] (Chức vụ: {chucVu}) KHÔNG CÓ QUYỀN truy cập vào Phân hệ Kho!", "Từ chối truy cập", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                                }
                             }
-                         /*   if (KiemTraQuyenNhanSu(chucVu, vaiTro))
+                            else if (phanHeDaChon == "Phân hệ Bán Hàng")
                             {
-                                MessageBox.Show($"Đăng nhập thành công!\nMã NV: {idNV}\nHọ tên: {tenNV}\nChức vụ: {chucVu}\nQuyền: Cho phép truy cập Phân hệ Nhân sự.",
-                                                "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                this.Hide();
-                                // Mở Form Nhân sự thuộc Project ERP_NhanSu
-                                HR_Management.FormMain frmNhanSu = new HR_Management.FormNhanSu();
-                                frmNhanSu.ShowDialog();
-                                this.Close();
-                            }*/
-                            else
+                                if (KiemTraQuyenBanHang(chucVu, vaiTro))
+                                {
+                                    MessageBox.Show($"Đăng nhập thành công!\nNghề nghiệp/Chức vụ: {chucVu}\nChào mừng vào Phân hệ Bán Hàng.", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                                    this.Hide();
+                                    QlyDonHang frmBanHang = new QlyDonHang();
+                                    frmBanHang.ShowDialog();
+                                    this.Close();
+                                }
+                                else
+                                {
+                                    MessageBox.Show($"Tài khoản của nhân viên [{tenNV}] (Chức vụ: {chucVu}) KHÔNG CÓ QUYỀN truy cập vào Phân hệ Bán Hàng!", "Từ chối truy cập", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                                }
+                            }
+                            else if (phanHeDaChon == "Phân hệ Logistics")
                             {
-                                // Đúng tài khoản nhưng không có quyền vào Phân hệ Bán hàng
-                                MessageBox.Show($"Tài khoản của nhân viên [{tenNV}] (Chức vụ: {chucVu}) không có quyền truy cập vào Phân hệ Bán Hàng!",
-                                                "Từ chối truy cập", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                                if (KiemTraQuyenLogistics(chucVu, vaiTro))
+                                {
+                                    MessageBox.Show($"Đăng nhập thành công!\nNghề nghiệp/Chức vụ: {chucVu}\nChào mừng vào Phân hệ Logistics.", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                                    this.Hide();
+                                    QuanLyNhaCungCap logistics = new QuanLyNhaCungCap();
+                                    logistics.ShowDialog();
+                                    this.Close();
+                                }
+                                else
+                                {
+                                    MessageBox.Show($"Tài khoản của nhân viên [{tenNV}] (Chức vụ: {chucVu}) KHÔNG CÓ QUYỀN truy cập vào Phân hệ Logistics!", "Từ chối truy cập", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                                }
                             }
                         }
                         else
                         {
-                            // Sai tên đăng nhập hoặc mật khẩu
                             MessageBox.Show("Tên đăng nhập hoặc mật khẩu không chính xác!", "Đăng nhập thất bại", MessageBoxButtons.OK, MessageBoxIcon.Error);
                             txtMatKhau.Clear();
                             txtMatKhau.Focus();
@@ -128,7 +148,7 @@ namespace ERP_Khach
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Lỗi kết nối CSDL Neon: " + ex.Message, "Lỗi PostgreSQL", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Lỗi kết nối CSDL: " + ex.Message, "Lỗi PostgreSQL", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -141,26 +161,15 @@ namespace ERP_Khach
             string cvLower = chucVu.Trim().ToLower();
             string vtLower = vaiTro.Trim().ToLower();
 
-       
-            if (cvLower.Contains("kho") ||
-                cvLower.Contains("kế toán") ||
-                cvLower.Contains("nhân sự") ||
-                cvLower.Contains("giao hàng") ||
-                cvLower.Contains("logistic"))
-            {
+            if (cvLower.Contains("kho") || cvLower.Contains("kế toán") || cvLower.Contains("nhân sự") || cvLower.Contains("giao hàng"))
                 return false;
-            }
 
-            bool laNhanVienBanHang = cvLower.Equals("nhân viên bán hàng") ||
-                                     cvLower.Equals("nhân viên kinh doanh") ||
-                                     cvLower.Equals("quản lý bán hàng") ||
-                                     cvLower.Equals("trưởng phòng bán hàng");
-
+            bool laNhanVienBanHang = cvLower.Equals("nhân viên bán hàng") || cvLower.Equals("nhân viên kinh doanh") || cvLower.Equals("quản lý bán hàng") || cvLower.Equals("trưởng phòng bán hàng");
             bool laAdmin = cvLower.Contains("admin") || vtLower.Contains("quản trị") || vtLower.Contains("admin");
 
             return laNhanVienBanHang || laAdmin;
         }
-        private bool KiemTraQuyenNhanSu(string chucVu, string vaiTro)
+        private bool KiemTraQuyenLogistics(string chucVu, string vaiTro)
         {
             if (string.IsNullOrEmpty(chucVu)) chucVu = "";
             if (string.IsNullOrEmpty(vaiTro)) vaiTro = "";
@@ -168,25 +177,32 @@ namespace ERP_Khach
             string cvLower = chucVu.Trim().ToLower();
             string vtLower = vaiTro.Trim().ToLower();
 
-
-            if (cvLower.Contains("kho") ||
-                cvLower.Contains("kế toán") ||
-                cvLower.Contains("bán hàng") ||
-                cvLower.Contains("giao hàng") ||
-                cvLower.Contains("logistic"))
-            {
+            if (cvLower.Contains("kho") || cvLower.Contains("kế toán") || cvLower.Contains("nhân sự") || cvLower.Contains("bán hàng"))
                 return false;
-            }
 
-            bool laNhanVienBanHang = cvLower.Equals("nhân viên nhân sự") ||
-                                     cvLower.Equals("nhân viên nhân sự") ||
-                                     cvLower.Equals("quản lý nhân sự") ||
-                                     cvLower.Equals("trưởng phòng nhân sự");
-
+            bool laNhanVienLogistics = cvLower.Equals("nhân viên logistics") || cvLower.Equals("quản lý logistics") || cvLower.Equals("trưởng phòng logistics");
             bool laAdmin = cvLower.Contains("admin") || vtLower.Contains("quản trị") || vtLower.Contains("admin");
 
-            return laNhanVienBanHang || laAdmin;
+            return laNhanVienLogistics || laAdmin;
         }
+
+        private bool KiemTraQuyenKho(string chucVu, string vaiTro)
+        {
+            if (string.IsNullOrEmpty(chucVu)) chucVu = "";
+            if (string.IsNullOrEmpty(vaiTro)) vaiTro = "";
+
+            string cvLower = chucVu.Trim().ToLower();
+            string vtLower = vaiTro.Trim().ToLower();
+
+            if (cvLower.Contains("sản xuất") || cvLower.Contains("kế toán") || cvLower.Contains("nhân sự") || cvLower.Contains("giao hàng"))
+                return false;
+
+            bool laNhanVienKho = cvLower.Equals("nhân viên kho") || cvLower.Equals("quản lý kho") || cvLower.Equals("trưởng phòng kho");
+            bool laAdmin = cvLower.Contains("admin") || vtLower.Contains("quản trị") || vtLower.Contains("admin");
+
+            return laNhanVienKho || laAdmin;
+        }
+
         private void chkHienThiMatKhau_CheckedChanged(object sender, EventArgs e)
         {
             txtMatKhau.UseSystemPasswordChar = !chkHienThiMatKhau.Checked;
@@ -194,7 +210,7 @@ namespace ERP_Khach
 
         private void btnThoat_Click(object sender, EventArgs e)
         {
-            Application.Exit();
+            this.Close();
         }
     }
 }
