@@ -11,8 +11,7 @@ namespace ERP_Khach
     {
         // Chuỗi kết nối Neon Postgres (Thay chuỗi kết nối của bạn vào đây)
         private string connectionString = ConfigurationManager.ConnectionStrings["ERP_Connection"].ConnectionString;
-        public static string NhanVienDangNhap_ID = "";
-        public static string NhanVienDangNhap_Ten = "";
+   
 
        
        
@@ -91,8 +90,7 @@ namespace ERP_Khach
                             {
                                 MessageBox.Show($"Đăng nhập thành công!\nMã NV: {idNV}\nHọ tên: {tenNV}\nChức vụ: {chucVu}\nQuyền: Cho phép truy cập Phân hệ Bán Hàng.",
                                                 "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                NhanVienDangNhap_ID = idNV;
-                                NhanVienDangNhap_Ten = tenNV;
+                      
 
                                 this.Hide();
 

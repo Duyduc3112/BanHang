@@ -286,6 +286,11 @@ namespace ERP_BanHang
             ThemKhachHang themKhachHangForm = new ThemKhachHang();
             themKhachHangForm.FormClosed += (s, args) => LoadDataKhachHang();
             themKhachHangForm.ShowDialog();
+            if (themKhachHangForm.ShowDialog() == DialogResult.OK)
+            {
+                // Tự động tải lại dữ liệu mới nhất từ CSDL Neon vào DataGridView
+                LoadDataKhachHang();
+            }
         }
 
         private void txtSearch_TextChanged(object sender, EventArgs e)
