@@ -101,6 +101,7 @@
             this.btnDangNhap.TabIndex = 8;
             this.btnDangNhap.Text = "Đăng xuất";
             this.btnDangNhap.UseVisualStyleBackColor = true;
+            this.btnDangNhap.Click += new System.EventHandler(this.btnDangNhap_Click);
             // 
             // pnlUserBottom
             // 
@@ -269,7 +270,7 @@
             this.lblHeaderTitle.ForeColor = System.Drawing.Color.DimGray;
             this.lblHeaderTitle.Location = new System.Drawing.Point(20, 15);
             this.lblHeaderTitle.Name = "lblHeaderTitle";
-            this.lblHeaderTitle.Size = new System.Drawing.Size(378, 21);
+            this.lblHeaderTitle.Size = new System.Drawing.Size(373, 21);
             this.lblHeaderTitle.TabIndex = 0;
             this.lblHeaderTitle.Text = "Phân hệ Bán hàng - Báo cáo Thống kê & Phản hồi";
             // 
@@ -351,7 +352,7 @@
             this.lblKPI3Value.ForeColor = System.Drawing.Color.Crimson;
             this.lblKPI3Value.Location = new System.Drawing.Point(15, 35);
             this.lblKPI3Value.Name = "lblKPI3Value";
-            this.lblKPI3Value.Size = new System.Drawing.Size(32, 37);
+            this.lblKPI3Value.Size = new System.Drawing.Size(33, 37);
             this.lblKPI3Value.TabIndex = 1;
             this.lblKPI3Value.Text = "0";
             // 
@@ -362,7 +363,7 @@
             this.lblKPI3Title.ForeColor = System.Drawing.Color.Gray;
             this.lblKPI3Title.Location = new System.Drawing.Point(15, 10);
             this.lblKPI3Title.Name = "lblKPI3Title";
-            this.lblKPI3Title.Size = new System.Drawing.Size(188, 20);
+            this.lblKPI3Title.Size = new System.Drawing.Size(192, 20);
             this.lblKPI3Title.TabIndex = 0;
             this.lblKPI3Title.Text = "PHẢN HỒI / HÀNG TRẢ LỖI";
             // 
@@ -383,7 +384,7 @@
             this.lblKPI2Value.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(167)))), ((int)(((byte)(69)))));
             this.lblKPI2Value.Location = new System.Drawing.Point(15, 35);
             this.lblKPI2Value.Name = "lblKPI2Value";
-            this.lblKPI2Value.Size = new System.Drawing.Size(32, 37);
+            this.lblKPI2Value.Size = new System.Drawing.Size(33, 37);
             this.lblKPI2Value.TabIndex = 1;
             this.lblKPI2Value.Text = "0";
             // 
@@ -394,7 +395,7 @@
             this.lblKPI2Title.ForeColor = System.Drawing.Color.Gray;
             this.lblKPI2Title.Location = new System.Drawing.Point(15, 10);
             this.lblKPI2Title.Name = "lblKPI2Title";
-            this.lblKPI2Title.Size = new System.Drawing.Size(188, 20);
+            this.lblKPI2Title.Size = new System.Drawing.Size(211, 20);
             this.lblKPI2Title.TabIndex = 0;
             this.lblKPI2Title.Text = "TỔNG SỐ ĐƠN HOÀN THÀNH";
             // 
@@ -415,7 +416,7 @@
             this.lblKPI1Value.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(13)))), ((int)(((byte)(110)))), ((int)(((byte)(253)))));
             this.lblKPI1Value.Location = new System.Drawing.Point(15, 35);
             this.lblKPI1Value.Name = "lblKPI1Value";
-            this.lblKPI1Value.Size = new System.Drawing.Size(101, 37);
+            this.lblKPI1Value.Size = new System.Drawing.Size(99, 37);
             this.lblKPI1Value.TabIndex = 1;
             this.lblKPI1Value.Text = "0 VNĐ";
             // 
@@ -426,7 +427,7 @@
             this.lblKPI1Title.ForeColor = System.Drawing.Color.Gray;
             this.lblKPI1Title.Location = new System.Drawing.Point(15, 10);
             this.lblKPI1Title.Name = "lblKPI1Title";
-            this.lblKPI1Title.Size = new System.Drawing.Size(176, 20);
+            this.lblKPI1Title.Size = new System.Drawing.Size(179, 20);
             this.lblKPI1Title.TabIndex = 0;
             this.lblKPI1Title.Text = "DOANH THU ĐƠN HÀNG";
             // 
@@ -467,7 +468,7 @@
             this.lblReportType.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.lblReportType.Location = new System.Drawing.Point(410, 48);
             this.lblReportType.Name = "lblReportType";
-            this.lblReportType.Size = new System.Drawing.Size(66, 20);
+            this.lblReportType.Size = new System.Drawing.Size(62, 20);
             this.lblReportType.TabIndex = 7;
             this.lblReportType.Text = "Loại BC:";
             // 
@@ -518,7 +519,7 @@
             this.lblToDate.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.lblToDate.Location = new System.Drawing.Point(200, 48);
             this.lblToDate.Name = "lblToDate";
-            this.lblToDate.Size = new System.Drawing.Size(63, 20);
+            this.lblToDate.Size = new System.Drawing.Size(75, 20);
             this.lblToDate.TabIndex = 3;
             this.lblToDate.Text = "Đến ngày:";
             // 
@@ -538,7 +539,7 @@
             this.lblFromDate.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.lblFromDate.Location = new System.Drawing.Point(0, 48);
             this.lblFromDate.Name = "lblFromDate";
-            this.lblFromDate.Size = new System.Drawing.Size(61, 20);
+            this.lblFromDate.Size = new System.Drawing.Size(65, 20);
             this.lblFromDate.TabIndex = 1;
             this.lblFromDate.Text = "Từ ngày:";
             // 
@@ -548,7 +549,7 @@
             this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
             this.lblTitle.Location = new System.Drawing.Point(0, 0);
             this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(465, 37);
+            this.lblTitle.Size = new System.Drawing.Size(518, 37);
             this.lblTitle.TabIndex = 0;
             this.lblTitle.Text = "Báo cáo Doanh thu & Phản hồi Sản phẩm";
             // 

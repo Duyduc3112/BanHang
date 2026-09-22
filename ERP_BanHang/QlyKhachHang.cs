@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Configuration;
 using System.Data;
-using Npgsql; // Đã đổi từ System.Data.SqlClient sang Npgsql
 using System.Drawing;
 using System.Windows.Forms;
+using Npgsql;
 
 namespace ERP_BanHang
 {
@@ -37,9 +37,10 @@ namespace ERP_BanHang
             KhoiTaoCotBang();
             LoadDataKhachHang();
 
-            // Đăng ký sự kiện nhấn/nhả chuột cho DataGridView
+            // Đăng ký sự kiện nhấn/nhả chuột & double-click cho DataGridView
             BangKhachHang.MouseDown += BangKhachHang_MouseDown;
             BangKhachHang.MouseUp += BangKhachHang_MouseUp;
+            BangKhachHang.CellDoubleClick += BangKhachHang_CellDoubleClick;
         }
 
         private void KhoiTaoCotBang()
@@ -109,7 +110,6 @@ namespace ERP_BanHang
 
         private void LoadDataKhachHang()
         {
-            // Thay ISNULL thành COALESCE cho chuẩn PostgreSQL
             string query = @"
                 SELECT 
                     ID_KH,
@@ -139,7 +139,59 @@ namespace ERP_BanHang
             }
         }
 
-  
+        // ==========================================
+        // KHU VỰC HÀNH ĐỘNG (THÊM, SỬA, XÓA, LỌC TÌM KIẾM)
+        // ==========================================
+
+        private void btnCreateCustomer_Click(object sender, EventArgs e)
+        {
+            ThemKhachHang themKhachHangForm = new ThemKhachHang();
+            if (themKhachHangForm.ShowDialog() == DialogResult.OK)
+            {
+                LoadDataKhachHang();
+            }
+        }
+
+        private void btnEditCustomer_Click(object sender, EventArgs e)
+        {
+            MoFormSuaKhachHang();
+        }
+
+        private void BangKhachHang_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // Cho phép nhấp đúp vào dòng bất kỳ để sửa trực tiếp
+            if (e.RowIndex >= 0)
+            {
+                MoFormSuaKhachHang();
+            }
+        }
+
+        private void MoFormSuaKhachHang()
+        {
+            if (BangKhachHang.CurrentRow == null || BangKhachHang.CurrentRow.Index < 0)
+            {
+                MessageBox.Show("Vui lòng chọn một khách hàng trong danh sách để chỉnh sửa!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string maKH = BangKhachHang.CurrentRow.Cells["colMaKH"].Value?.ToString();
+
+            if (string.IsNullOrEmpty(maKH))
+            {
+                MessageBox.Show("Mã khách hàng không hợp lệ!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            SuaKhachHang suaForm = new SuaKhachHang(maKH);
+            if (suaForm.ShowDialog() == DialogResult.OK)
+            {
+                LoadDataKhachHang();
+            }
+        }
+
+        // ==========================================
+        // THAO TÁC LONG-PRESS DỂ XÓA
+        // ==========================================
 
         private void BangKhachHang_MouseDown(object sender, MouseEventArgs e)
         {
@@ -278,20 +330,8 @@ namespace ERP_BanHang
         }
 
         // ==========================================
-        // KHU VỰC HÀNH ĐỘNG (THÊM, LỌC TÌM KIẾM)
+        // KHU VỰC TÌM KIẾM DỮ LIỆU
         // ==========================================
-
-        private void btnCreateCustomer_Click(object sender, EventArgs e)
-        {
-            ThemKhachHang themKhachHangForm = new ThemKhachHang();
-            themKhachHangForm.FormClosed += (s, args) => LoadDataKhachHang();
-            themKhachHangForm.ShowDialog();
-            if (themKhachHangForm.ShowDialog() == DialogResult.OK)
-            {
-                // Tự động tải lại dữ liệu mới nhất từ CSDL Neon vào DataGridView
-                LoadDataKhachHang();
-            }
-        }
 
         private void txtSearch_TextChanged(object sender, EventArgs e)
         {
@@ -385,6 +425,71 @@ namespace ERP_BanHang
             BaoCaoThongKe baoCaoThongKeForm = new BaoCaoThongKe();
             baoCaoThongKeForm.ShowDialog();
             this.Close();
+        }
+
+        private void btnDangNhap_Click(object sender, EventArgs e)
+        {
+            DialogResult confirm = MessageBox.Show(
+                "Bạn có chắc chắn muốn ĐĂNG XUẤT và quay lại màn hình đăng nhập?",
+                "Xác nhận đăng xuất",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (confirm == DialogResult.Yes)
+            {
+                try
+                {
+                    // 1. Xóa file phiên làm việc tạm (nếu có)
+                    string tempPath = System.IO.Path.Combine(Application.StartupPath, "session.txt");
+                    if (System.IO.File.Exists(tempPath))
+                    {
+                        System.IO.File.Delete(tempPath);
+                    }
+
+                    // 2. Thuật toán tìm file ERP_Khach.exe linh hoạt trên mọi máy
+                    string baseDir = Application.StartupPath;
+                    string targetExe = "ERP_Khach.exe";
+                    string pathExeDangNhap = "";
+
+                    // Kiểm tra các vị trí file exe có thể nằm
+                    string[] possiblePaths = new string[]
+                    {
+                // Khi chạy Release / Đóng gói chung thư mục
+                System.IO.Path.Combine(baseDir, targetExe),
+                System.IO.Path.Combine(baseDir, "..", targetExe),
+                System.IO.Path.Combine(baseDir, "..", "ERP_Khach", targetExe),
+                
+                // Khi chạy Debug trong Visual Studio
+                System.IO.Path.GetFullPath(System.IO.Path.Combine(baseDir, @"..\..\..\..\ERP_Khach\bin\Debug\ERP_Khach.exe")),
+                System.IO.Path.GetFullPath(System.IO.Path.Combine(baseDir, @"..\..\..\..\ERP_Khach\bin\Release\ERP_Khach.exe"))
+                    };
+
+                    foreach (string p in possiblePaths)
+                    {
+                        if (System.IO.File.Exists(p))
+                        {
+                            pathExeDangNhap = p;
+                            break;
+                        }
+                    }
+
+                    // 3. Khởi chạy ứng dụng đăng nhập và đóng ứng dụng hiện tại
+                    if (!string.IsNullOrEmpty(pathExeDangNhap))
+                    {
+                        System.Diagnostics.Process.Start(pathExeDangNhap);
+                        Application.Exit(); // Đóng hoàn toàn ERP_BanHang
+                    }
+                    else
+                    {
+                        MessageBox.Show("Không tìm thấy file ứng dụng Đăng nhập (ERP_Khach.exe)!\nVui lòng kiểm tra lại thư mục chứa file.",
+                                        "Lỗi khởi chạy", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Lỗi khi đăng xuất: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
     }
 }

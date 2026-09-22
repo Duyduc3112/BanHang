@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using OfficeOpenXml;
 
 namespace ERP_BanHang
 {
@@ -14,6 +12,9 @@ namespace ERP_BanHang
         [STAThread]
         static void Main()
         {
+            // Thiết lập LicenseContext chuẩn, tương thích với hầu hết các bản EPPlus
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new QlyDonHang());
