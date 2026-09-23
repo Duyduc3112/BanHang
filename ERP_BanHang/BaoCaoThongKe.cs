@@ -337,6 +337,11 @@ namespace ERP_BanHang
                 return;
             }
 
+            // =========================================================================
+            // THÊM CẤU HÌNH LICENSE CHO EPPLUS 8.X ĐỂ TRÁNH LỖI LICENSECONTEXT OBSOLETE
+            // =========================================================================
+            ExcelPackage.License.SetNonCommercialPersonal("Acecook ERP");
+
             using (SaveFileDialog sfd = new SaveFileDialog())
             {
                 string reportTypeName = cboReportType.SelectedIndex == 0 ? "DoanhThuDonHang" : "YeuCauSauBanHang";

@@ -13,7 +13,7 @@ namespace ERP_BanHang
         static void Main()
         {
             // Thiết lập LicenseContext chuẩn, tương thích với hầu hết các bản EPPlus
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            ExcelPackage.License.SetNonCommercialPersonal("Acecook ERP");
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);

@@ -1,5 +1,5 @@
 ﻿using ERP_BanHang; // Tham chiếu sang Project Bán Hàng
-using ERP;
+//using ERP;
 using ERPKho1;
 using Npgsql;
 using System;
@@ -121,7 +121,7 @@ namespace ERP_Khach
                                     MessageBox.Show($"Tài khoản của nhân viên [{tenNV}] (Chức vụ: {chucVu}) KHÔNG CÓ QUYỀN truy cập vào Phân hệ Bán Hàng!", "Từ chối truy cập", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                                 }
                             }
-                            else if (phanHeDaChon == "Phân hệ Logistics")
+                          /*  else if (phanHeDaChon == "Phân hệ Logistics")
                             {
                                 if (KiemTraQuyenLogistics(chucVu, vaiTro))
                                 {
@@ -136,7 +136,7 @@ namespace ERP_Khach
                                 {
                                     MessageBox.Show($"Tài khoản của nhân viên [{tenNV}] (Chức vụ: {chucVu}) KHÔNG CÓ QUYỀN truy cập vào Phân hệ Logistics!", "Từ chối truy cập", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                                 }
-                            }
+                            }*/
                         }
                         else
                         {
