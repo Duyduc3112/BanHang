@@ -61,13 +61,13 @@ namespace ERP_BanHang
             dgvChiTiet.Columns.Add("colDonGia", "ĐƠN GIÁ");
             dgvChiTiet.Columns.Add("colThanhTien", "THÀNH TIỀN");
 
-            // Mapping DataPropertyName với SQL
-            dgvChiTiet.Columns["colMaSP"].DataPropertyName = "ID_SP";
-            dgvChiTiet.Columns["colMoTa"].DataPropertyName = "TenHang";
-            dgvChiTiet.Columns["colDVT"].DataPropertyName = "DonViTinh";
-            dgvChiTiet.Columns["colSoLuong"].DataPropertyName = "SoLuong";
-            dgvChiTiet.Columns["colDonGia"].DataPropertyName = "DonGia";
-            dgvChiTiet.Columns["colThanhTien"].DataPropertyName = "ThanhTien";
+            // Mapping DataPropertyName tương ứng với alias trong SQL
+            dgvChiTiet.Columns["colMaSP"].DataPropertyName = "id_sp";
+            dgvChiTiet.Columns["colMoTa"].DataPropertyName = "tenhang";
+            dgvChiTiet.Columns["colDVT"].DataPropertyName = "donvitinh";
+            dgvChiTiet.Columns["colSoLuong"].DataPropertyName = "soluong";
+            dgvChiTiet.Columns["colDonGia"].DataPropertyName = "dongia";
+            dgvChiTiet.Columns["colThanhTien"].DataPropertyName = "thanhtien";
 
             // Tỷ lệ co giãn các cột
             dgvChiTiet.Columns["colMaSP"].FillWeight = 12;
@@ -79,6 +79,7 @@ namespace ERP_BanHang
 
             // Định dạng căn lề và tiền tệ
             dgvChiTiet.Columns["colSoLuong"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgvChiTiet.Columns["colDVT"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             dgvChiTiet.Columns["colDonGia"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             dgvChiTiet.Columns["colThanhTien"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
 
@@ -92,26 +93,27 @@ namespace ERP_BanHang
 
         private void LoadThongTinChungHoaDon()
         {
+            // Query lấy thông tin hóa đơn, khách hàng, nhân viên (Hỗ trợ Postgres)
             string query = @"
                 SELECT 
-                    HD.ID_HD,
-                    HD.NgayLap,
-                    HD.TrangThai AS TrangThaiHD,
-                    HD.HinhThucTT,
-                    HD.TraTruoc,
-                    HD.TongTien,
-                    KH.TenDoanhNghiep,
-                    KH.NguoiDaiDien,
-                    KH.MaSoThue,
-                    KH.DiaChi,
-                    KH.SDT,
-                    KH.Email,
-                    NV.TenNV AS NhanVienLap
-                FROM HoaDon HD
-                INNER JOIN DonHang DH ON HD.ID_DH = DH.ID_DH
-                INNER JOIN KhachHang KH ON DH.ID_KH = KH.ID_KH
-                INNER JOIN NhanVien NV ON HD.ID_NV = NV.ID_NV
-                WHERE DH.ID_DH = @ID_DH";
+                    hd.id_hd,
+                    hd.ngaylap,
+                    hd.trangthai AS trangthaihd,
+                    hd.hinhthuctt,
+                    COALESCE(hd.tratruoc, 0) AS tratruoc,
+                    COALESCE(hd.tongtien, 0) AS tongtien,
+                    kh.tendoanhnghiep,
+                    kh.nguoidaidien,
+                    kh.masothue,
+                    kh.diachi,
+                    kh.sdt,
+                    kh.email,
+                    nv.tennv AS nhanvienlap
+                FROM hoadon hd
+                INNER JOIN donhang dh ON hd.id_dh = dh.id_dh
+                INNER JOIN khachhang kh ON dh.id_kh = kh.id_kh
+                INNER JOIN nhanvien nv ON hd.id_nv = nv.id_nv
+                WHERE dh.id_dh = @ID_DH";
 
             using (NpgsqlConnection conn = new NpgsqlConnection(connectionString))
             {
@@ -127,19 +129,20 @@ namespace ERP_BanHang
                             if (reader.Read())
                             {
                                 // Đán dữ liệu thông tin Hóa đơn & Khách hàng lên các Label giao diện
-                                if (lblMaHoaDon != null) lblMaHoaDon.Text = reader["ID_HD"].ToString();
-                                if (lblNgayLap != null) lblNgayLap.Text = Convert.ToDateTime(reader["NgayLap"]).ToString("dd/MM/yyyy HH:mm");
-                                if (lblTenKhachHang != null) lblTenKhachHang.Text = reader["TenDoanhNghiep"].ToString();
-                                if (lblNguoiDaiDien != null) lblNguoiDaiDien.Text = reader["NguoiDaiDien"].ToString();
-                                if (lblMaSoThue != null) lblMaSoThue.Text = reader["MaSoThue"].ToString();
-                                if (lblDiaChi != null) lblDiaChi.Text = reader["DiaChi"].ToString();
-                                if (lblSDT != null) lblSDT.Text = reader["SDT"].ToString();
-                                if (lblEmail != null) lblEmail.Text = reader["Email"].ToString();
-                                if (lblNhanVienLap != null) lblNhanVienLap.Text = reader["NhanVienLap"].ToString();
+                                if (lblMaHoaDon != null) lblMaHoaDon.Text = reader["id_hd"].ToString();
+                                if (lblNgayLap != null && reader["ngaylap"] != DBNull.Value)
+                                    lblNgayLap.Text = Convert.ToDateTime(reader["ngaylap"]).ToString("dd/MM/yyyy HH:mm");
+                                if (lblTenKhachHang != null) lblTenKhachHang.Text = reader["tendoanhnghiep"].ToString();
+                                if (lblNguoiDaiDien != null) lblNguoiDaiDien.Text = reader["nguoidaidien"].ToString();
+                                if (lblMaSoThue != null) lblMaSoThue.Text = reader["masothue"].ToString();
+                                if (lblDiaChi != null) lblDiaChi.Text = reader["diachi"].ToString();
+                                if (lblSDT != null) lblSDT.Text = reader["sdt"].ToString();
+                                if (lblEmail != null) lblEmail.Text = reader["email"].ToString();
+                                if (lblNhanVienLap != null) lblNhanVienLap.Text = reader["nhanvienlap"].ToString();
 
                                 // Tính toán hiển thị tổng số tiền
-                                decimal tongTien = Convert.ToDecimal(reader["TongTien"]);
-                                decimal traTruoc = Convert.ToDecimal(reader["TraTruoc"]);
+                                decimal tongTien = Convert.ToDecimal(reader["tongtien"]);
+                                decimal traTruoc = Convert.ToDecimal(reader["tratruoc"]);
                                 decimal conLai = tongTien - traTruoc;
 
                                 if (lblTongTien != null) lblTongTien.Text = tongTien.ToString("N0") + " đ";
@@ -158,20 +161,20 @@ namespace ERP_BanHang
 
         private void LoadDataChiTietHoaDon()
         {
-            // Query lấy danh sách sản phẩm thuộc Hóa đơn/Đơn hàng được chọn
+            // Query lấy danh sách sản phẩm thuộc Hóa đơn/Đơn hàng kết hợp bảng HangHoa để lấy Đơn vị tính (donvitinh)
             string query = @"
                 SELECT 
-                    SP.ID_SP,
-                    HH.TenHang,
-                    HH.DonViTinh,
-                    CTHD.SoLuong,
-                    CTHD.DonGia,
-                    CTHD.ThanhTien
-                FROM ChiTietHoaDon CTHD
-                INNER JOIN HoaDon HD ON CTHD.ID_HD = HD.ID_HD
-                INNER JOIN SanPham SP ON CTHD.ID_SP = SP.ID_SP
-                INNER JOIN HangHoa HH ON SP.MaHang = HH.MaHang
-                WHERE HD.ID_DH = @ID_DH";
+                    sp.id_sp,
+                    hh.tenhang,
+                    hh.donvitinh,
+                    cthd.soluong,
+                    cthd.dongia,
+                    (cthd.soluong * cthd.dongia) AS thanhtien
+                FROM chitiethoadon cthd
+                INNER JOIN hoadon hd ON cthd.id_hd = hd.id_hd
+                INNER JOIN sanpham sp ON cthd.id_sp = sp.id_sp
+                INNER JOIN hanghoa hh ON sp.mahang = hh.mahang
+                WHERE hd.id_dh = @ID_DH";
 
             using (NpgsqlConnection conn = new NpgsqlConnection(connectionString))
             {
