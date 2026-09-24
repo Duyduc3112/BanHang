@@ -16,7 +16,7 @@ namespace ERP_Khach
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new ConfirmHoaDon());
+            Application.Run(new LogInPhanHe());
         }
     }
 }
